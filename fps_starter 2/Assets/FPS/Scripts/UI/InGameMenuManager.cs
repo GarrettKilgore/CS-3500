@@ -79,7 +79,8 @@ namespace Unity.FPS.UI
         void Update()
         {
             // Lock cursor when clicking outside of menu
-            if (!MenuRoot.activeSelf && Mouse.current.leftButton.wasPressedThisFrame)
+            // (Skip while paused, so other pause menus like the Weather Settings menu stay clickable.)
+            if (!MenuRoot.activeSelf && Time.timeScale > 0f && Mouse.current.leftButton.wasPressedThisFrame)
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;

@@ -21,6 +21,11 @@ public class MonsterScript : MonoBehaviour
     [Header("Effects")]
     public GameObject deathVFX; //Death particle effect
 
+    [Header("Audio")]
+    public AudioClip damageTick; //Sound when hit (same one the template robots use)
+    public AudioClip deathSound; //Explosion when it dies
+    private int lastDamageSoundFrame = -1;
+
     private bool hasBeenAggravated = false;
     private bool isAggressive = false;
     private bool isDead = false;
@@ -33,6 +38,7 @@ public class MonsterScript : MonoBehaviour
         if (health != null)
         {
             health.OnDie += Death;
+            health.OnDamaged += OnDamaged;
         }
 
         damageable = GetComponent<Damageable>();
@@ -97,6 +103,27 @@ public class MonsterScript : MonoBehaviour
         }
     }
 
+    void OnDamaged(float damage, GameObject source)
+    {
+        //Play the hit sound once per frame (shotgun pellets would otherwise stack)
+        if (damageTick != null && Time.frameCount != lastDamageSoundFrame)
+        {
+            lastDamageSoundFrame = Time.frameCount;
+            AudioUtility.CreateSFX(damageTick, transform.position, AudioUtility.AudioGroups.DamageTick, 0f);
+        }
+    }
+
+#if UNITY_EDITOR
+    //Auto-fill the template's hit sound so it works without dragging it in by hand
+    void OnValidate()
+    {
+        if (damageTick == null)
+            damageTick = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/FPS/Audio/SFX/Player/Damage_Tick2.mp3");
+        if (deathSound == null)
+            deathSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/FPS/Audio/SFX/Weapons/Launcher_Explosion.wav");
+    }
+#endif
+
     void Death()
     {
     if (isDead) return;
@@ -111,6 +138,12 @@ public class MonsterScript : MonoBehaviour
     if (deathVFX != null)
     {
         Instantiate(deathVFX, transform.position + (Vector3.up * 1.2f), Quaternion.identity);
+    }
+
+    //Explosion sound (3D, so it comes from where the bot was)
+    if (deathSound != null)
+    {
+        AudioUtility.CreateSFX(deathSound, transform.position + Vector3.up, AudioUtility.AudioGroups.Impact, 1f, 6f);
     }
 
     //Despawn the monster

@@ -113,6 +113,10 @@ public static class WeatherVFXSetup
         subs.AddSubEmitter(splash, ParticleSystemSubEmitterType.Collision,
             ParticleSystemSubEmitterProperties.InheritNothing);
 
+        // Adding a sub-emitter can switch Play On Awake off on the parent; force it back on.
+        var rainMain = rain.main;
+        rainMain.playOnAwake = true;
+
         rain.Play(true);
         Selection.activeGameObject = rainGO;
         Debug.Log("[VFX] Rain added. Save the scene (Ctrl+S) and press Play.");
@@ -178,7 +182,8 @@ public static class WeatherVFXSetup
 
     // ---------------------------------------------------------------- Helpers
 
-    static Material GetOrCreateMaterial(string name, Color tint, bool additive)
+    internal static Material GetOrCreateMaterial(string name, Color tint, bool additive,
+        string texturePath = DotTexturePath)
     {
         string path = $"{MaterialFolder}/{name}.mat";
         var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -191,7 +196,7 @@ public static class WeatherVFXSetup
                      ?? Shader.Find("Particles/Standard Unlit");
         var mat = new Material(shader) { name = name };
 
-        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(DotTexturePath);
+        var tex = texturePath != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath) : null;
         if (tex != null) mat.SetTexture("_BaseMap", tex);
         mat.SetColor("_BaseColor", tint);
 
